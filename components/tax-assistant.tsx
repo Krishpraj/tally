@@ -31,6 +31,8 @@ import { useToast } from "@/components/ui/use-toast"
 import { cn } from "@/lib/utils"
 import { useMobile } from "@/hooks/use-mobile"
 import { motion, AnimatePresence } from "framer-motion"
+import { nanoid } from "nanoid"
+import { ChatHistorySidebar, ChatHistory } from "@/components/chat-history-sidebar"
 
 // Lazy load the chart and table components for better performance
 import dynamic from "next/dynamic"
@@ -108,19 +110,31 @@ export default function TaxAssistant() {
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([])
   const [isTyping, setIsTyping] = useState(false)
   const [showScrollButton, setShowScrollButton] = useState(false)
+  const [currentChatId, setCurrentChatId] = useState<string | null>(null)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const queryClient = useQueryClient()
   const isMobile = useMobile()
   const { toast } = useToast()
+  
+  // Create a chat ID for a new conversation if none exists
+  useEffect(() => {
+    if (!currentChatId) {
+      setCurrentChatId(nanoid())
+    }
+  }, [currentChatId])
 
-  const { messages, input, handleInputChange, handleSubmit, isLoading, append, error } = useChat({
+  const { messages, input, handleInputChange, handleSubmit, isLoading, append, setMessages, error } = useChat({
     api: "/api/chat",
+    id: currentChatId || "default",
+    initialMessages: [],
     onFinish: () => {
+      // Save the chat to history when a message is received
+      saveCurrentChatToHistory()
       // Invalidate and refetch any queries as needed
       queryClient.invalidateQueries({ queryKey: ["chatHistory"] })
-
       // Set typing to false when finished
       setIsTyping(false)
     },
@@ -133,6 +147,84 @@ export default function TaxAssistant() {
       })
     },
   })
+
+  // Save the current chat to local storage
+  const saveCurrentChatToHistory = () => {
+    if (!currentChatId || messages.length === 0) {
+      return;
+    }
+
+    // Get first user message as title, or use default
+    const firstUserMessage = messages.find(msg => msg.role === "user")?.content;
+    const title = firstUserMessage ? 
+      (firstUserMessage.length > 30 ? firstUserMessage.substring(0, 30) + '...' : firstUserMessage) : 
+      "Tax Conversation";
+    
+    // Get the last messages for preview
+    const lastUserMessage = [...messages].reverse().find(msg => msg.role === "user")?.content || "";
+    const lastAssistantMessage = [...messages].reverse().find(msg => msg.role === "assistant")?.content || "";
+    const preview = lastAssistantMessage || lastUserMessage || "No messages";
+
+    const chatHistory: ChatHistory = {
+      id: currentChatId,
+      title,
+      timestamp: new Date().toISOString(),
+      preview,
+      messages: messages
+    };
+
+    // Get existing histories
+    const existingHistoriesString = localStorage.getItem("chatHistories");
+    const existingHistories: ChatHistory[] = existingHistoriesString 
+      ? JSON.parse(existingHistoriesString) 
+      : [];
+      
+    // Check if this chat already exists in history
+    const existingIndex = existingHistories.findIndex(h => h.id === currentChatId);
+    
+    if (existingIndex !== -1) {
+      // Update existing chat
+      existingHistories[existingIndex] = chatHistory;
+    } else {
+      // Add new chat
+      existingHistories.push(chatHistory);
+    }
+
+    // Store back to localStorage
+    localStorage.setItem("chatHistories", JSON.stringify(existingHistories));
+  };
+
+  // Create a new chat
+  const handleNewChat = () => {
+    // Save current chat if there are messages
+    if (messages.length > 0) {
+      saveCurrentChatToHistory();
+    }
+    
+    // Create new chat ID and clear messages
+    setCurrentChatId(nanoid());
+    setMessages([]);
+  };
+
+  // Load a chat from history
+  const handleSelectChat = (chatHistory: ChatHistory) => {
+    // Save current chat if different from selected and has messages
+    if (currentChatId !== chatHistory.id && messages.length > 0) {
+      saveCurrentChatToHistory();
+    }
+    
+    setCurrentChatId(chatHistory.id);
+    setMessages(chatHistory.messages);
+  };
+
+  // Handle deleting a chat
+  const handleDeleteChat = (id: string) => {
+    if (id === currentChatId) {
+      // If deleting current chat, create a new one
+      setCurrentChatId(nanoid());
+      setMessages([]);
+    }
+  };
 
   // Set typing indicator when a new message is being generated
   useEffect(() => {
@@ -264,346 +356,364 @@ export default function TaxAssistant() {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
   }
 
+  const handleSidebarCollapseToggle = () => {
+    setSidebarCollapsed(!sidebarCollapsed)
+  }
+
   return (
-    <div className="flex flex-col h-[75vh] md:h-[80vh]">
-      <Card className="flex-1 overflow-hidden flex flex-col border-slate-200 dark:border-slate-800 shadow-lg rounded-xl">
-        <div
-          ref={messagesContainerRef}
-          className="flex-1 overflow-y-auto p-4 md:p-6 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent"
-        >
-          {error && (
-            <div className="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg dark:bg-red-900/30 dark:text-red-400">
-              <p>Error: {error.message || "There was an error connecting to the AI. Please try again."}</p>
-            </div>
-          )}
-          {messages.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="h-full flex flex-col items-center justify-center text-center p-8"
-            >
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-6">
-                <Sparkles className="h-8 w-8 text-primary" />
+    <div className="flex h-[75vh] md:h-[80vh]">
+      {/* Chat History Sidebar */}
+      <ChatHistorySidebar 
+        onSelect={handleSelectChat}
+        onNew={handleNewChat}
+        onDelete={handleDeleteChat}
+        currentChatId={currentChatId}
+        isMobile={isMobile}
+        isCollapsed={sidebarCollapsed}
+        onCollapseToggle={handleSidebarCollapseToggle}
+      />
+      
+      {/* Main Chat Interface - Adjust padding based on sidebar state */}
+      <div className={`flex-1 flex flex-col transition-all duration-200 ${!isMobile && !sidebarCollapsed ? 'pl-64' : isMobile ? '' : 'pl-16'}`}>
+        <Card className="flex-1 overflow-hidden flex flex-col border-slate-200 dark:border-slate-800 shadow-lg rounded-xl">
+          <div
+            ref={messagesContainerRef}
+            className="flex-1 overflow-y-auto p-4 md:p-6 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent"
+          >
+            {error && (
+              <div className="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg dark:bg-red-900/30 dark:text-red-400">
+                <p>Error: {error.message || "There was an error connecting to the AI. Please try again."}</p>
               </div>
-              <h3 className="text-2xl font-semibold mb-2">Welcome to the Tax Assistant</h3>
-              <p className="text-muted-foreground mb-8 max-w-md">
-                Ask me any questions about your taxes, or upload your tax documents for analysis.
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-2xl">
-                {suggestedQuestions.map((question, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: 0.1 + index * 0.05 }}
-                  >
-                    <Button
-                      variant="outline"
-                      className="justify-start text-left h-auto py-3 w-full group hover:border-primary/50 hover:bg-primary/5"
-                      onClick={() => handleSuggestedQuestion(question.text)}
-                      disabled={isLoading || isTyping}
-                    >
-                      <span className="flex items-center">
-                        {question.icon}
-                        <span className="group-hover:text-primary transition-colors">{question.text}</span>
-                      </span>
-                    </Button>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-          ) : (
-            <>
-              <div className="space-y-6">
-                {messages.map((message, index) => {
-                  const isUser = message.role === "user"
-                  const timestamp = new Date()
-
-                  // Check for special content that should render as a chart or table
-                  const hasChart = message.content.includes("[TAX_BRACKET_CHART]")
-                  const hasTable = message.content.includes("[TAX_BREAKDOWN_TABLE]")
-
-                  // Process content to remove special markers
-                  const content = message.content
-                    .replace("[TAX_BRACKET_CHART]", "")
-                    .replace("[TAX_BREAKDOWN_TABLE]", "")
-
-                  return (
+            )}
+            {messages.length === 0 ? (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="h-full flex flex-col items-center justify-center text-center p-8"
+              >
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-6">
+                  <Sparkles className="h-8 w-8 text-primary" />
+                </div>
+                <h3 className="text-2xl font-semibold mb-2">Welcome to the Tax Assistant</h3>
+                <p className="text-muted-foreground mb-8 max-w-md">
+                  Ask me any questions about your taxes, or upload your tax documents for analysis.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-2xl">
+                  {suggestedQuestions.map((question, index) => (
                     <motion.div
                       key={index}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className={cn("flex", isUser ? "justify-end" : "justify-start")}
+                      transition={{ duration: 0.3, delay: 0.1 + index * 0.05 }}
                     >
-                      {!isUser && (
-                        <div className="flex-shrink-0 mr-3">
-                          <Avatar className="h-9 w-9 border-2 border-primary/20">
-                            <div className="bg-primary text-primary-foreground h-full w-full flex items-center justify-center text-xs font-bold">
-                              TA
-                            </div>
-                          </Avatar>
-                        </div>
-                      )}
-                      <div className={cn("flex flex-col max-w-[85%] md:max-w-[75%]", isUser && "items-end")}>
-                        <div className="flex items-center mb-1">
-                          <span className="text-xs text-muted-foreground">
-                            {isUser ? "You" : "Tax Assistant"} • {formatTime(timestamp)}
-                          </span>
-                        </div>
-                        <div
-                          className={cn(
-                            "rounded-xl p-4",
-                            isUser
-                              ? "bg-primary text-primary-foreground rounded-tr-none"
-                              : "bg-muted dark:bg-slate-800 rounded-tl-none",
-                          )}
-                        >
-                          <div className="whitespace-pre-wrap text-sm md:text-base">{content}</div>
-
-                          {hasChart && (
-                            <div className="mt-4">
-                              <Tabs defaultValue="chart" className="w-full">
-                                <TabsList className="mb-2 w-full">
-                                  <TabsTrigger value="chart" className="flex-1">
-                                    Chart View
-                                  </TabsTrigger>
-                                  <TabsTrigger value="table" className="flex-1">
-                                    Table View
-                                  </TabsTrigger>
-                                </TabsList>
-                                <TabsContent value="chart">
-                                  <DynamicContent>
-                                    <TaxBreakdownChart />
-                                  </DynamicContent>
-                                </TabsContent>
-                                <TabsContent value="table">
-                                  <DynamicContent>
-                                    <TaxBreakdownTable />
-                                  </DynamicContent>
-                                </TabsContent>
-                              </Tabs>
-                            </div>
-                          )}
-
-                          {hasTable && !hasChart && (
-                            <div className="mt-4">
-                              <DynamicContent>
-                                <TaxBreakdownTable />
-                              </DynamicContent>
-                            </div>
-                          )}
-
-                          {!isUser && index === messages.length - 1 && !isLoading && !isTyping && (
-                            <div className="mt-4 flex flex-wrap gap-2">
-                              {suggestedQuestions.slice(0, 3).map((question, qIndex) => (
-                                <Button
-                                  key={qIndex}
-                                  variant="secondary"
-                                  size="sm"
-                                  className="bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800"
-                                  onClick={() => handleSuggestedQuestion(question.text)}
-                                  disabled={isLoading || isTyping}
-                                >
-                                  {question.icon}
-                                  <span className="ml-1">
-                                    {question.text.length > 25 ? question.text.substring(0, 25) + "..." : question.text}
-                                  </span>
-                                </Button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      {isUser && (
-                        <div className="flex-shrink-0 ml-3">
-                          <Avatar className="h-9 w-9 border-2 border-secondary/20">
-                            <div className="bg-secondary text-secondary-foreground h-full w-full flex items-center justify-center text-xs font-bold">
-                              YOU
-                            </div>
-                          </Avatar>
-                        </div>
-                      )}
-                    </motion.div>
-                  )
-                })}
-
-                {isTyping && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex justify-start"
-                  >
-                    <div className="flex-shrink-0 mr-3">
-                      <Avatar className="h-9 w-9 border-2 border-primary/20">
-                        <div className="bg-primary text-primary-foreground h-full w-full flex items-center justify-center text-xs font-bold">
-                          TA
-                        </div>
-                      </Avatar>
-                    </div>
-                    <div className="flex flex-col max-w-[85%] md:max-w-[75%]">
-                      <div className="flex items-center mb-1">
-                        <span className="text-xs text-muted-foreground">Tax Assistant • {formatTime(new Date())}</span>
-                      </div>
-                      <div className="rounded-xl p-4 bg-muted dark:bg-slate-800 rounded-tl-none">
-                        <div className="flex space-x-2">
-                          <div className="h-2 w-2 bg-primary/60 rounded-full animate-bounce"></div>
-                          <div
-                            className="h-2 w-2 bg-primary/60 rounded-full animate-bounce"
-                            style={{ animationDelay: "0.2s" }}
-                          ></div>
-                          <div
-                            className="h-2 w-2 bg-primary/60 rounded-full animate-bounce"
-                            style={{ animationDelay: "0.4s" }}
-                          ></div>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </div>
-              <div ref={messagesEndRef} />
-            </>
-          )}
-        </div>
-
-        <AnimatePresence>
-          {showScrollButton && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              className="absolute bottom-24 right-6"
-            >
-              <Button size="icon" className="rounded-full shadow-md" onClick={scrollToBottom}>
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
-          {fileToUpload && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex items-center mb-3 p-3 bg-muted dark:bg-slate-800 rounded-lg"
-            >
-              <FileText className="h-4 w-4 mr-2 text-muted-foreground" />
-              <span className="text-sm truncate flex-1">{fileToUpload.name}</span>
-              <div className="flex gap-2">
-                <form onSubmit={handleFileUpload}>
-                  <Button type="submit" size="sm" disabled={isUploading || isLoading || isTyping} className="h-8">
-                    {isUploading ? (
-                      <>
-                        <Loader2 className="h-3 w-3 mr-2 animate-spin" />
-                        Uploading...
-                      </>
-                    ) : (
-                      "Upload"
-                    )}
-                  </Button>
-                </form>
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  className="h-8 w-8"
-                  onClick={() => setFileToUpload(null)}
-                  disabled={isUploading}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            </motion.div>
-          )}
-
-          <form onSubmit={handleSubmit} className="flex gap-2">
-            <div className="relative flex-1">
-              <Input
-                value={input}
-                onChange={handleInputChange}
-                placeholder="Ask about your taxes..."
-                className="pr-10 py-6 bg-muted/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 focus-visible:ring-primary"
-                disabled={isLoading || isUploading || isTyping}
-              />
-              {uploadedFiles.length > 0 && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
                       <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 text-muted-foreground"
+                        variant="outline"
+                        className="justify-start text-left h-auto py-3 w-full group hover:border-primary/50 hover:bg-primary/5"
+                        onClick={() => handleSuggestedQuestion(question.text)}
+                        disabled={isLoading || isTyping}
                       >
-                        <Badge
-                          variant="outline"
-                          className="absolute -top-2 -right-2 h-4 w-4 p-0 flex items-center justify-center text-[10px]"
-                        >
-                          {uploadedFiles.length}
-                        </Badge>
-                        <FileText className="h-4 w-4" />
+                        <span className="flex items-center">
+                          {question.icon}
+                          <span className="group-hover:text-primary transition-colors">{question.text}</span>
+                        </span>
                       </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Uploaded files</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-            </div>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            ) : (
+              <>
+                <div className="space-y-6">
+                  {messages.map((message, index) => {
+                    const isUser = message.role === "user"
+                    const timestamp = new Date()
+
+                    // Check for special content that should render as a chart or table
+                    const hasChart = message.content.includes("[TAX_BRACKET_CHART]")
+                    const hasTable = message.content.includes("[TAX_BREAKDOWN_TABLE]")
+
+                    // Process content to remove special markers
+                    const content = message.content
+                      .replace("[TAX_BRACKET_CHART]", "")
+                      .replace("[TAX_BREAKDOWN_TABLE]", "")
+
+                    return (
+                      <motion.div
+                        key={index}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className={cn("flex", isUser ? "justify-end" : "justify-start")}
+                      >
+                        {!isUser && (
+                          <div className="flex-shrink-0 mr-3">
+                            <Avatar className="h-9 w-9 border-2 border-primary/20">
+                              <div className="bg-primary text-primary-foreground h-full w-full flex items-center justify-center text-xs font-bold">
+                                TA
+                              </div>
+                            </Avatar>
+                          </div>
+                        )}
+                        <div className={cn("flex flex-col max-w-[85%] md:max-w-[75%]", isUser && "items-end")}>
+                          <div className="flex items-center mb-1">
+                            <span className="text-xs text-muted-foreground">
+                              {isUser ? "You" : "Tax Assistant"} • {formatTime(timestamp)}
+                            </span>
+                          </div>
+                          <div
+                            className={cn(
+                              "rounded-xl p-4",
+                              isUser
+                                ? "bg-primary text-primary-foreground rounded-tr-none"
+                                : "bg-muted dark:bg-slate-800 rounded-tl-none",
+                            )}
+                          >
+                            <div className="whitespace-pre-wrap text-sm md:text-base">{content}</div>
+
+                            {hasChart && (
+                              <div className="mt-4">
+                                <Tabs defaultValue="chart" className="w-full">
+                                  <TabsList className="mb-2 w-full">
+                                    <TabsTrigger value="chart" className="flex-1">
+                                      Chart View
+                                    </TabsTrigger>
+                                    <TabsTrigger value="table" className="flex-1">
+                                      Table View
+                                    </TabsTrigger>
+                                  </TabsList>
+                                  <TabsContent value="chart">
+                                    <DynamicContent>
+                                      <TaxBreakdownChart />
+                                    </DynamicContent>
+                                  </TabsContent>
+                                  <TabsContent value="table">
+                                    <DynamicContent>
+                                      <TaxBreakdownTable />
+                                    </DynamicContent>
+                                  </TabsContent>
+                                </Tabs>
+                              </div>
+                            )}
+
+                            {hasTable && !hasChart && (
+                              <div className="mt-4">
+                                <DynamicContent>
+                                  <TaxBreakdownTable />
+                                </DynamicContent>
+                              </div>
+                            )}
+
+                            {!isUser && index === messages.length - 1 && !isLoading && !isTyping && (
+                              <div className="mt-4 flex flex-wrap gap-2">
+                                {suggestedQuestions.slice(0, 3).map((question, qIndex) => (
+                                  <Button
+                                    key={qIndex}
+                                    variant="secondary"
+                                    size="sm"
+                                    className="bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800"
+                                    onClick={() => handleSuggestedQuestion(question.text)}
+                                    disabled={isLoading || isTyping}
+                                  >
+                                    {question.icon}
+                                    <span className="ml-1">
+                                      {question.text.length > 25 ? question.text.substring(0, 25) + "..." : question.text}
+                                    </span>
+                                  </Button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        {isUser && (
+                          <div className="flex-shrink-0 ml-3">
+                            <Avatar className="h-9 w-9 border-2 border-secondary/20">
+                              <div className="bg-secondary text-secondary-foreground h-full w-full flex items-center justify-center text-xs font-bold">
+                                YOU
+                              </div>
+                            </Avatar>
+                          </div>
+                        )}
+                      </motion.div>
+                    )
+                  })}
+
+                  {isTyping && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex justify-start"
+                    >
+                      <div className="flex-shrink-0 mr-3">
+                        <Avatar className="h-9 w-9 border-2 border-primary/20">
+                          <div className="bg-primary text-primary-foreground h-full w-full flex items-center justify-center text-xs font-bold">
+                            TA
+                          </div>
+                        </Avatar>
+                      </div>
+                      <div className="flex flex-col max-w-[85%] md:max-w-[75%]">
+                        <div className="flex items-center mb-1">
+                          <span className="text-xs text-muted-foreground">Tax Assistant • {formatTime(new Date())}</span>
+                        </div>
+                        <div className="rounded-xl p-4 bg-muted dark:bg-slate-800 rounded-tl-none">
+                          <div className="flex space-x-2">
+                            <div className="h-2 w-2 bg-primary/60 rounded-full animate-bounce"></div>
+                            <div
+                              className="h-2 w-2 bg-primary/60 rounded-full animate-bounce"
+                              style={{ animationDelay: "0.2s" }}
+                            ></div>
+                            <div
+                              className="h-2 w-2 bg-primary/60 rounded-full animate-bounce"
+                              style={{ animationDelay: "0.4s" }}
+                            ></div>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </div>
+                <div ref={messagesEndRef} />
+              </>
+            )}
+          </div>
+
+          <AnimatePresence>
+            {showScrollButton && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                className="absolute bottom-24 right-6"
+              >
+                <Button size="icon" className="rounded-full shadow-md" onClick={scrollToBottom}>
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
+            {fileToUpload && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center mb-3 p-3 bg-muted dark:bg-slate-800 rounded-lg"
+              >
+                <FileText className="h-4 w-4 mr-2 text-muted-foreground" />
+                <span className="text-sm truncate flex-1">{fileToUpload.name}</span>
+                <div className="flex gap-2">
+                  <form onSubmit={handleFileUpload}>
+                    <Button type="submit" size="sm" disabled={isUploading || isLoading || isTyping} className="h-8">
+                      {isUploading ? (
+                        <>
+                          <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                          Uploading...
+                        </>
+                      ) : (
+                        "Upload"
+                      )}
+                    </Button>
+                  </form>
                   <Button
                     type="button"
-                    variant="outline"
                     size="icon"
-                    className="h-12 w-12 bg-muted/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 hover:bg-muted dark:hover:bg-slate-800"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isLoading || isUploading || isTyping}
+                    variant="ghost"
+                    className="h-8 w-8"
+                    onClick={() => setFileToUpload(null)}
+                    disabled={isUploading}
                   >
-                    <FileUp className="h-5 w-5" />
+                    <X className="h-4 w-4" />
                   </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Upload tax document</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              className="hidden"
-              accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx"
-            />
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    type="submit"
-                    size="icon"
-                    className="h-12 w-12"
-                    disabled={isLoading || isUploading || isTyping || !input.trim()}
-                  >
-                    {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Send message</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </form>
+                </div>
+              </motion.div>
+            )}
 
-          <div className="mt-2 text-xs text-center text-muted-foreground">
-            Tax Assistant provides general guidance only. For personalized advice, consult a tax professional.
+            <form onSubmit={handleSubmit} className="flex gap-2">
+              <div className="relative flex-1">
+                <Input
+                  value={input}
+                  onChange={handleInputChange}
+                  placeholder="Ask about your taxes..."
+                  className="pr-10 py-6 bg-muted/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 focus-visible:ring-primary"
+                  disabled={isLoading || isUploading || isTyping}
+                />
+                {uploadedFiles.length > 0 && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 text-muted-foreground"
+                        >
+                          <Badge
+                            variant="outline"
+                            className="absolute -top-2 -right-2 h-4 w-4 p-0 flex items-center justify-center text-[10px]"
+                          >
+                            {uploadedFiles.length}
+                          </Badge>
+                          <FileText className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Uploaded files</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+              </div>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-12 w-12 bg-muted/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 hover:bg-muted dark:hover:bg-slate-800"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isLoading || isUploading || isTyping}
+                    >
+                      <FileUp className="h-5 w-5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Upload tax document</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                className="hidden"
+                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx"
+              />
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="submit"
+                      size="icon"
+                      className="h-12 w-12"
+                      disabled={isLoading || isUploading || isTyping || !input.trim()}
+                    >
+                      {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Send message</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </form>
+
+            <div className="mt-2 text-xs text-center text-muted-foreground">
+              Tax Assistant provides general guidance only. For personalized advice, consult a tax professional.
+            </div>
           </div>
-        </div>
-      </Card>
+        </Card>
+      </div>
     </div>
   )
 }
