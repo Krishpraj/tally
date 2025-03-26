@@ -87,7 +87,7 @@ Would you like to learn more about available tax credits and deductions that may
     // Otherwise, use the AI to generate a response
     try {
       const result = streamText({
-        model: google('gemini-1.5-pro-latest'),
+        model: google('gemini-2.0-flash-001'),
         messages,
         system: `You are a helpful tax assistant chatbot. Provide accurate, concise information about Canadian tax laws, forms, and procedures. 
         
