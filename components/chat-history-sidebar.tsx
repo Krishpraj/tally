@@ -251,7 +251,10 @@ export function ChatHistorySidebar({
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 rounded-full opacity-0 group-hover:opacity-100 hover:bg-rose-100 hover:text-rose-500 dark:hover:bg-rose-900"
+                            className={cn(
+                              "h-7 w-7 rounded-full hover:bg-rose-100 hover:text-rose-500 dark:hover:bg-rose-900",
+                              isMobile ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                            )}
                             onClick={(e) => handleDelete(e, history.id)}
                           >
                             <Trash2 className="h-4 w-4" />
