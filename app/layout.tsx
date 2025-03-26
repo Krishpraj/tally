@@ -6,8 +6,8 @@ import { Providers } from '@/components/providers'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Tax Assistant',
-  description: 'AI-powered tax assistant to help with your tax questions',
+  title: 'Tally',
+  description: 'Keeping track of your taxes, one number at a time.',
   generator: 'v0.dev'
 }
 

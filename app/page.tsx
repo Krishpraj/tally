@@ -14,10 +14,10 @@ export default function Home() {
               Your Personal Tax Expert
             </div>
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl mb-3">
-              Tax Assistant
+              Tally
             </h1>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Get instant answers to your tax questions and personalized guidance for your tax return
+              Keeping track of your taxes, one number at a time.
             </p>
           </div>
           
@@ -25,7 +25,7 @@ export default function Home() {
         </div>
       </div>
       <Toaster />
-    </main>
-  )
+      
+    </main>   )
 }
 

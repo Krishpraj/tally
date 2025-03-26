@@ -53,23 +53,22 @@ const TaxBreakdownTable = dynamic(() => import("@/components/tax-breakdown-table
     </div>
   ),
 })
-
 const suggestedQuestions = [
   {
     text: "How do tax brackets work?",
-    icon: <BarChart3 className="h-4 w-4 mr-2" />,
+    icon: <BarChart3 className="h-4 w-4 mr-2 flex-shrink-0" />,
   },
   {
     text: "What's the standard deduction?",
-    icon: <Calculator className="h-4 w-4 mr-2" />,
+    icon: <Calculator className="h-4 w-4 mr-2 flex-shrink-0" />,
   },
   {
     text: "When is the tax filing deadline?",
-    icon: <Calendar className="h-4 w-4 mr-2" />,
+    icon: <Calendar className="h-4 w-4 mr-2 flex-shrink-0" />,
   },
   {
     text: "Can I deduct home office costs?",
-    icon: <DollarSign className="h-4 w-4 mr-2" />,
+    icon: <HelpCircle className="h-4 w-4 mr-2 flex-shrink-0" />,
   }, 
 ]
 
@@ -95,7 +94,7 @@ export default function TaxAssistant() {
   const [isTyping, setIsTyping] = useState(false)
   const [showScrollButton, setShowScrollButton] = useState(false)
   const [currentChatId, setCurrentChatId] = useState<string | null>(null)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -458,7 +457,7 @@ export default function TaxAssistant() {
                 <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-6">
                   <Sparkles className="h-8 w-8 text-primary" />
                 </div>
-                <h3 className="text-2xl font-semibold mb-2">Welcome to the Tax Assistant</h3>
+                <h3 className="text-2xl font-semibold mb-2">Welcome to Tally</h3>
                 <p className="text-muted-foreground mb-8 max-w-md">
                   Ask me any questions about your taxes, or upload your tax documents for analysis.
                 </p>
@@ -513,7 +512,7 @@ export default function TaxAssistant() {
                           <div className="flex-shrink-0 mr-3">
                             <Avatar className="h-9 w-9 border-2 border-primary/20">
                               <div className="bg-primary text-primary-foreground h-full w-full flex items-center justify-center text-xs font-bold">
-                                TA
+                                TL
                               </div>
                             </Avatar>
                           </div>
@@ -521,7 +520,7 @@ export default function TaxAssistant() {
                         <div className={cn("flex flex-col max-w-[85%] md:max-w-[75%]", isUser && "items-end")}>
                           <div className="flex items-center mb-1">
                             <span className="text-xs text-muted-foreground">
-                              {isUser ? "You" : "Tax Assistant"} • {formatTime(timestamp)}
+                              {isUser ? "You" : "Tally"} • {formatTime(timestamp)}
                             </span>
                           </div>
                           <div
@@ -610,13 +609,13 @@ export default function TaxAssistant() {
                       <div className="flex-shrink-0 mr-3">
                         <Avatar className="h-9 w-9 border-2 border-primary/20">
                           <div className="bg-primary text-primary-foreground h-full w-full flex items-center justify-center text-xs font-bold">
-                            TA
+                            TL
                           </div>
                         </Avatar>
                       </div>
                       <div className="flex flex-col max-w-[85%] md:max-w-[75%]">
                         <div className="flex items-center mb-1">
-                          <span className="text-xs text-muted-foreground">Tax Assistant • {formatTime(new Date())}</span>
+                          <span className="text-xs text-muted-foreground">Tally • {formatTime(new Date())}</span>
                         </div>
                         <div className="rounded-xl p-4 bg-muted dark:bg-slate-800 rounded-tl-none">
                           <div className="flex space-x-2">
@@ -772,7 +771,7 @@ export default function TaxAssistant() {
             </form>
 
             <div className="mt-2 text-xs text-center text-muted-foreground">
-              Tax Assistant provides general guidance only. For personalized advice, consult a tax professional.
+              Tally provides general guidance only. For personalized advice, consult a tax professional.
             </div>
           </div>
         </Card>
