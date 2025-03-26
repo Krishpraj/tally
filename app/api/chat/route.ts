@@ -18,32 +18,37 @@ export async function POST(req: Request) {
         let enhancedResponse = ""
 
         if (lastUserMessage.includes("tax bracket") || lastUserMessage.includes("how do tax brackets work")) {
-          enhancedResponse = `Tax brackets are ranges of income that are taxed at specific rates. The U.S. uses a progressive tax system, which means that different portions of your income are taxed at different rates.
+          enhancedResponse = `Tax brackets define income ranges that are taxed at specific rates. Canada uses a progressive tax system, meaning different portions of your income are taxed at different rates.
 
-      For 2023, there are seven federal income tax brackets: 10%, 12%, 22%, 24%, 32%, 35%, and 37%. Your income is taxed at each applicable rate as it moves through the brackets.
+For 2023, the federal income tax brackets are: 15%, 20.5%, 26%, 29%, and 33%. Your income is taxed at each applicable rate as it moves through these brackets.
 
-      For example, if you're a single filer:
-      - The first $11,000 of your taxable income is taxed at 10%
-      - Income between $11,001 and $44,725 is taxed at 12%
-      - And so on up to the highest bracket
+For example, if you're a single filer:
 
-      This means you don't pay the highest rate on all your income, only on the portion that falls into that bracket.
+The first $53,359 of your taxable income is taxed at 15%
 
-      [TAX_BRACKET_CHART]
+Income between $53,359 and $106,717 is taxed at 20.5%
 
-      Would you like me to calculate your specific tax liability based on your income?`
+And so on up to the highest bracket
+
+This means you don’t pay the highest rate on all your income—only on the portion that falls within each bracket.
+
+[TAX_BRACKET_CHART]
+
+Would you like me to estimate your tax liability based on your income?`
         } else if (lastUserMessage.includes("standard deduction")) {
-          enhancedResponse = `For the 2023 tax year, the standard deduction amounts are:
+          enhancedResponse = `For the 2023 tax year, instead of a standard deduction like in the U.S., Canada provides a Basic Personal Amount (BPA), which is a non-refundable tax credit that reduces the amount of income tax you owe.
 
-      - $13,850 for single filers and married filing separately
-      - $27,700 for married filing jointly and qualifying widow(er)s
-      - $20,800 for heads of household
+The federal BPA for 2023 is:
 
-      The standard deduction reduces your taxable income. You can either take the standard deduction or itemize your deductions, whichever gives you the greater tax benefit.
+$15,000 for most taxpayers
 
-      [TAX_BREAKDOWN_TABLE]
+Provincial and territorial governments also set their own Basic Personal Amounts, which vary by region.
 
-      Would you like to know more about when you should itemize instead of taking the standard deduction?`
+In Canada, you cannot choose between a standard deduction and itemized deductions. Instead, you can claim various tax credits and deductions for specific expenses, such as medical expenses, charitable donations, and employment expenses.
+
+[TAX_BREAKDOWN_TABLE]
+
+Would you like to learn more about available tax credits and deductions that may apply to you?`
         }
 
         // If we have an enhanced response, return it directly instead of using streamText
@@ -84,9 +89,9 @@ export async function POST(req: Request) {
       const result = streamText({
         model: google('gemini-1.5-pro-latest'),
         messages,
-        system: `You are a helpful tax assistant chatbot. Provide accurate, concise information about U.S. tax laws, forms, and procedures. 
+        system: `You are a helpful tax assistant chatbot. Provide accurate, concise information about Canadian tax laws, forms, and procedures. 
         
-        Focus on individual tax returns (Form 1040) and related topics. If users ask about specific tax situations, provide general guidance but remind them that you're not a certified tax professional and they should consult with a tax professional for personalized advice.
+        Focus on individual tax returns  and related topics. If users ask about specific tax situations, provide general guidance but remind them that you're not a certified tax professional and they should consult with a tax professional for personalized advice.
         
         When appropriate, mention relevant tax forms, deadlines, and resources. Be friendly and conversational while maintaining professionalism.
         

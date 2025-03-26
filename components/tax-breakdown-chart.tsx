@@ -16,15 +16,13 @@ export default function TaxBreakdownChart() {
     canvas.width = canvas.offsetWidth
     canvas.height = canvas.offsetHeight
 
-    // Tax bracket data for 2023 (single filer)
+    // Canadian federal tax bracket data for 2025
     const brackets = [
-      { rate: 0.1, limit: 11000, color: "#4ade80" },
-      { rate: 0.12, limit: 44725, color: "#22c55e" },
-      { rate: 0.22, limit: 95375, color: "#16a34a" },
-      { rate: 0.24, limit: 182100, color: "#15803d" },
-      { rate: 0.32, limit: 231250, color: "#166534" },
-      { rate: 0.35, limit: 578125, color: "#14532d" },
-      { rate: 0.37, limit: Number.POSITIVE_INFINITY, color: "#052e16" },
+      { rate: 0.15, limit: 53359, color: "#4ade80" },      // 15% on first $53,359
+      { rate: 0.205, limit: 106717, color: "#22c55e" },    // 20.5% on $53,359 to $106,717
+      { rate: 0.26, limit: 165430, color: "#16a34a" },     // 26% on $106,717 to $165,430
+      { rate: 0.29, limit: 235675, color: "#15803d" },     // 29% on $165,430 to $235,675
+      { rate: 0.33, limit: Number.POSITIVE_INFINITY, color: "#166534" } // 33% over $235,675
     ]
 
     // Chart dimensions
@@ -37,7 +35,7 @@ export default function TaxBreakdownChart() {
     ctx.translate(margin.left, margin.top)
 
     // Max income to display (for x-axis scale)
-    const maxIncome = 200000
+    const maxIncome = 250000
 
     // Scale functions
     const xScale = (income: number) => (income / maxIncome) * width
@@ -118,7 +116,7 @@ export default function TaxBreakdownChart() {
     ctx.textAlign = "center"
     ctx.fillStyle = "#1e293b"
     ctx.font = "bold 16px Inter, sans-serif"
-    ctx.fillText("2023 Federal Income Tax Brackets (Single Filer)", width / 2, -5)
+    ctx.fillText("2025 Canadian Federal Income Tax Brackets", width / 2, -5)
   }, [])
 
   return (
