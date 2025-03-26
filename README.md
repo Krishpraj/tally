@@ -2,7 +2,7 @@
 
 Tally is your friendly AI assistant for all things tax and finance. Whether you're looking for tax-saving tips, insights on deductions, or financial planning advice, Tally makes it easy to navigate the world of personal finance. From tracking tax brackets to explaining credits and deductions, Tally helps you stay informed and make smarter financial decisions—keeping track of your taxes, one number at a time.
 
-https://github.com/user-attachments/assets/b93d3ad4-a2f0-4549-9281-78c35a1fa905
+![cursorful-video-1743027793362](https://github.com/user-attachments/assets/174b1a52-3b74-4c6c-b328-e19a330503b4)
 
 ## 🚀 Features
 
@@ -59,7 +59,7 @@ The app will be available at `http://localhost:3000`.
 ## 🔜 Next Steps
 
 - **AI Model Upgrade**: Implement an AI model that can analyze financial documents  
-- **Branding & UI Enhancements**: Improve branding, themes, and user experience  
+- **Branding Enhancements**: Create Logos, Favicons, etc..
 - **Expanded File Analysis**: Enable real-time tax document parsing and summary generation  
 
 ---
