@@ -1,6 +1,6 @@
 # Tally - Your AI Tax & Finance Assistant
 
-Tally is your friendly AI assistant for all things tax and finance. Whether you're looking for tax-saving tips, insights on deductions, or financial planning advice, Tally makes it easy to navigate the world of personal finance. From tracking tax brackets to explaining credits and deductions, Tally helps you stay informed and make smarter financial decisions—keeping track of your taxes, one number at a time.
+Tally is your friendly AI assistant for all things tax and finance (Canadian) . Whether you're looking for tax-saving tips, insights on deductions, or financial planning advice, Tally makes it easy to navigate the world of personal finance. From tracking tax brackets to explaining credits and deductions, Tally helps you stay informed and make smarter financial decisions—keeping track of your taxes, one number at a time.
 
 
 https://github.com/user-attachments/assets/0ad456cc-a359-49ac-b48b-4bcd1de49f85
@@ -14,7 +14,7 @@ https://github.com/user-attachments/assets/0ad456cc-a359-49ac-b48b-4bcd1de49f85
 - Hosted on **Vercel** for smooth deployment  
 
 ### 💬 Chat Interface
-- **Vercel AI SDK (useChat)** powers an interactive chat UI  
+- **Vercel AI SDK (useChat)** powers an interactive chat UI specifically tuned to assist with Canadian financial information.  
 - **Chat bubbles** for a conversational experience  
 - **Chat history sidebar** for easy access to past conversations  
 - Options to **delete chat history** or **start a new chat**  
@@ -32,7 +32,7 @@ https://github.com/user-attachments/assets/0ad456cc-a359-49ac-b48b-4bcd1de49f85
 ### ⚡ Performance & Optimization
 - **TanStack Query (useQuery)** to handle async operations efficiently  
 - **State management** for file uploads and chat history  
-- **Intuitive UI/UX** for a smooth user experience  
+- **Intuitive and Responsive UI/UX** for a smooth user experience  
 
 ## 📦 Installation & Setup
 
@@ -46,7 +46,7 @@ cd tally
 ```sh
 GOOGLE_GENERATIVE_AI_API_KEY=your-api-key-here
 ```
-
+Note: Get API Key From https://ai.google.dev/gemini-api/docs/api-key 
 ### 3️⃣ Install dependencies
 ```sh
 npm install
@@ -58,14 +58,21 @@ npm run dev
 ```
 The app will be available at `http://localhost:3000`.
 
-## 🔜 Next Steps
+## 📖 Assumptions & Future Improvements
 
+### 🔹 Assumptions Made
+- AI-generated responses are simulated and can be improved with fine-tuning.
+- Placeholder logic is used for file uploads, with plans for real-time analysis in the future.
+
+### 🚀 Future Enhancements
 - **AI Model Upgrade**: Implement an AI model that can analyze financial documents  
-- **Branding Enhancements**: Create Logos, Favicons, etc..
+- **Branding & UI Enhancements**: Improve branding, themes, and user experience  
 - **Expanded File Analysis**: Enable real-time tax document parsing and summary generation  
 
 ---
 
 🚀 Built with **Next.js, Tailwind CSS, Vercel AI SDK, TanStack Query, and Gemini AI SDK**.  
+
+
 
 
