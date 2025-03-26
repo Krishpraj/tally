@@ -1,5 +1,6 @@
 import TaxAssistant from '@/components/tax-assistant'
 import { Toaster } from '@/components/ui/toaster'
+import { ThemeSwitcher } from '@/components/theme-switcher'
 
 // Enable Partial Prerendering for this page
 export const experimental_ppr = true
@@ -7,6 +8,7 @@ export const experimental_ppr = true
 export default function Home() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
+      <ThemeSwitcher />
       <div className="container mx-auto px-4 py-8 md:py-12">
         <div className="mx-auto max-w-5xl">
           <div className="mb-8 text-center">
