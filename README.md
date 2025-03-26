@@ -38,8 +38,8 @@ https://github.com/user-attachments/assets/0ad456cc-a359-49ac-b48b-4bcd1de49f85
 
 ### 1️⃣ Clone the repository
 ```sh
-git clone https://github.com/your-repo/tally-ai.git
-cd tally-ai
+git clone https://github.com/krishpraj/tally.git
+cd tally
 ```
 
 ### 2️⃣ Create an `.env.local` file
