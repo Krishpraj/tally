@@ -68,5 +68,4 @@ The app will be available at `http://localhost:3000`.
 
 🚀 Built with **Next.js, Tailwind CSS, Vercel AI SDK, TanStack Query, and Gemini AI SDK**.  
 
-Want to contribute? Open an issue or submit a PR! 😊
 
