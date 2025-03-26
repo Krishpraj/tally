@@ -1,6 +1,6 @@
 # Tally - Your AI Tax & Finance Assistant
 
-Tally is your friendly AI assistant for all things tax and finance. Whether you're looking for tax-saving tips, insights on deductions, or financial planning advice, Tally makes it easy to navigate the world of personal finance. From tracking tax brackets to explaining credits and deductions, Tally helps you stay informed and make smarter financial decisions—keeping track of your taxes, one number at a time.
+Tally is your friendly AI assistant for all things tax and finance (Canadian) . Whether you're looking for tax-saving tips, insights on deductions, or financial planning advice, Tally makes it easy to navigate the world of personal finance. From tracking tax brackets to explaining credits and deductions, Tally helps you stay informed and make smarter financial decisions—keeping track of your taxes, one number at a time.
 
 
 https://github.com/user-attachments/assets/0ad456cc-a359-49ac-b48b-4bcd1de49f85
@@ -14,7 +14,7 @@ https://github.com/user-attachments/assets/0ad456cc-a359-49ac-b48b-4bcd1de49f85
 - Hosted on **Vercel** for smooth deployment  
 
 ### 💬 Chat Interface
-- **Vercel AI SDK (useChat)** powers an interactive chat UI  
+- **Vercel AI SDK (useChat)** powers an interactive chat UI specifically tuned to assist with Canadian financial information.  
 - **Chat bubbles** for a conversational experience  
 - **Chat history sidebar** for easy access to past conversations  
 - Options to **delete chat history** or **start a new chat**  
@@ -32,7 +32,7 @@ https://github.com/user-attachments/assets/0ad456cc-a359-49ac-b48b-4bcd1de49f85
 ### ⚡ Performance & Optimization
 - **TanStack Query (useQuery)** to handle async operations efficiently  
 - **State management** for file uploads and chat history  
-- **Intuitive UI/UX** for a smooth user experience  
+- **Intuitive and Responsive UI/UX** for a smooth user experience  
 
 ## 📦 Installation & Setup
 
