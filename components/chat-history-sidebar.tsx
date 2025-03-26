@@ -55,26 +55,41 @@ export function ChatHistorySidebar({
     }
   };
 
-  // Load chat histories from localStorage on component mount
+  // Load chat histories from localStorage on component mount and when currentChatId changes
+  // This ensures the sidebar refreshes when new chats are created or existing ones updated
   useEffect(() => {
-    const loadChatHistories = () => {
-      const savedHistories = localStorage.getItem("chatHistories")
-      if (savedHistories) {
-        try {
-          setChatHistories(JSON.parse(savedHistories))
-        } catch (error) {
-          console.error("Error parsing chat histories:", error)
-          toast({
-            title: "Error",
-            description: "Could not load chat histories. Starting fresh.",
-            variant: "destructive",
-          })
-        }
+    loadChatHistories();
+    
+    // Set up interval to check for updates periodically
+    const intervalId = setInterval(loadChatHistories, 2000);
+    
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [currentChatId]);
+
+  const loadChatHistories = () => {
+    const savedHistories = localStorage.getItem("chatHistories")
+    if (savedHistories) {
+      try {
+        const histories = JSON.parse(savedHistories);
+        
+        // Sort by timestamp (newest first)
+        histories.sort((a: ChatHistory, b: ChatHistory) => 
+          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+        );
+        
+        setChatHistories(histories);
+      } catch (error) {
+        console.error("Error parsing chat histories:", error)
+        toast({
+          title: "Error",
+          description: "Could not load chat histories. Starting fresh.",
+          variant: "destructive",
+        })
       }
     }
-
-    loadChatHistories()
-  }, [toast])
+  }
 
   // Format date for display
   const formatDate = (dateString: string) => {
@@ -145,7 +160,7 @@ export function ChatHistorySidebar({
         </div>
       )}
       
-      {/* Sidebar */}
+      {/* Sidebar - Now using absolute positioning */}
       <AnimatePresence>
         {isOpen && !internalCollapsed && (
           <motion.div

@@ -70,23 +70,7 @@ const suggestedQuestions = [
   {
     text: "Can I deduct my home office expenses?",
     icon: <DollarSign className="h-4 w-4 mr-2" />,
-  },
-  {
-    text: "What forms do I need for self-employment income?",
-    icon: <FileText className="h-4 w-4 mr-2" />,
-  },
-  {
-    text: "How do I report investment income?",
-    icon: <DollarSign className="h-4 w-4 mr-2" />,
-  },
-  {
-    text: "What's the difference between itemized and standard deductions?",
-    icon: <HelpCircle className="h-4 w-4 mr-2" />,
-  },
-  {
-    text: "How do I check my refund status?",
-    icon: <Clock className="h-4 w-4 mr-2" />,
-  },
+  }, 
 ]
 
 // Wrap dynamic content in Suspense for Partial Prerendering
@@ -122,21 +106,41 @@ export default function TaxAssistant() {
   // Create a chat ID for a new conversation if none exists
   useEffect(() => {
     if (!currentChatId) {
-      setCurrentChatId(nanoid())
+      // Try to get the most recent chat
+      const existingHistoriesString = localStorage.getItem("chatHistories");
+      const existingHistories: ChatHistory[] = existingHistoriesString 
+        ? JSON.parse(existingHistoriesString) 
+        : [];
+      
+      // If there are existing chats, load the most recent one
+      if (existingHistories.length > 0) {
+        // Sort by timestamp (newest first)
+        existingHistories.sort((a, b) => 
+          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+        );
+        const recentChat = existingHistories[0];
+        setCurrentChatId(recentChat.id);
+        setMessages(recentChat.messages);
+      } else {
+        // Create a new chat with a unique ID
+        setCurrentChatId(nanoid());
+      }
     }
-  }, [currentChatId])
+  }, []);
 
   const { messages, input, handleInputChange, handleSubmit, isLoading, append, setMessages, error } = useChat({
     api: "/api/chat",
     id: currentChatId || "default",
     initialMessages: [],
+    onResponse: () => {
+      // Update typing status
+      setIsTyping(true);
+    },
     onFinish: () => {
-      // Save the chat to history when a message is received
-      saveCurrentChatToHistory()
-      // Invalidate and refetch any queries as needed
-      queryClient.invalidateQueries({ queryKey: ["chatHistory"] })
       // Set typing to false when finished
-      setIsTyping(false)
+      setIsTyping(false);
+      // Invalidate and refetch any queries as needed
+      queryClient.invalidateQueries({ queryKey: ["chatHistory"] });
     },
     onError: (err) => {
       console.error("Chat error:", err)
@@ -144,9 +148,17 @@ export default function TaxAssistant() {
         title: "Error",
         description: "There was an error connecting to the AI. Please try again.",
         variant: "destructive",
-      })
+      });
+      setIsTyping(false);
     },
-  })
+  });
+
+  // Save chat history whenever messages change
+  useEffect(() => {
+    if (currentChatId && messages.length > 0) {
+      saveCurrentChatToHistory();
+    }
+  }, [messages, currentChatId]);
 
   // Save the current chat to local storage
   const saveCurrentChatToHistory = () => {
@@ -202,8 +214,30 @@ export default function TaxAssistant() {
     }
     
     // Create new chat ID and clear messages
-    setCurrentChatId(nanoid());
+    const newChatId = nanoid();
+    setCurrentChatId(newChatId);
     setMessages([]);
+    
+    // Add an empty chat to history to maintain it even if user doesn't add messages
+    const newChatHistory: ChatHistory = {
+      id: newChatId,
+      title: "New Conversation",
+      timestamp: new Date().toISOString(),
+      preview: "No messages yet",
+      messages: []
+    };
+    
+    // Get existing histories
+    const existingHistoriesString = localStorage.getItem("chatHistories");
+    const existingHistories: ChatHistory[] = existingHistoriesString 
+      ? JSON.parse(existingHistoriesString) 
+      : [];
+    
+    // Add the new chat
+    existingHistories.push(newChatHistory);
+    
+    // Store back to localStorage
+    localStorage.setItem("chatHistories", JSON.stringify(existingHistories));
   };
 
   // Load a chat from history
@@ -219,13 +253,42 @@ export default function TaxAssistant() {
 
   // Handle deleting a chat
   const handleDeleteChat = (id: string) => {
+    // Get existing histories
+    const existingHistoriesString = localStorage.getItem("chatHistories");
+    const existingHistories: ChatHistory[] = existingHistoriesString 
+      ? JSON.parse(existingHistoriesString) 
+      : [];
+    
+    // Filter out the deleted chat
+    const updatedHistories = existingHistories.filter((history) => history.id !== id);
+    
+    // Store back to localStorage
+    localStorage.setItem("chatHistories", JSON.stringify(updatedHistories));
+    
     if (id === currentChatId) {
       // If deleting current chat, create a new one
-      setCurrentChatId(nanoid());
-      setMessages([]);
+      handleNewChat();
     }
   };
 
+  // Custom submit handler to ensure chat history saves
+  const customSubmitHandler = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (input.trim() === '') return;
+    
+    try {
+      await handleSubmit(e);
+      // Chat history will be saved via the useEffect hook
+    } catch (err) {
+      console.error("Error submitting message:", err);
+      toast({
+        title: "Error",
+        description: "There was an error sending your message. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+  
   // Set typing indicator when a new message is being generated
   useEffect(() => {
     if (isLoading) {
@@ -373,8 +436,8 @@ export default function TaxAssistant() {
         onCollapseToggle={handleSidebarCollapseToggle}
       />
       
-      {/* Main Chat Interface - Adjust padding based on sidebar state */}
-      <div className={`flex-1 flex flex-col transition-all duration-200 ${!isMobile && !sidebarCollapsed ? 'pl-64' : isMobile ? '' : 'pl-16'}`}>
+      {/* Main Chat Interface - No more conditional padding */}
+      <div className="flex-1 flex flex-col w-full transition-all duration-200">
         <Card className="flex-1 overflow-hidden flex flex-col border-slate-200 dark:border-slate-800 shadow-lg rounded-xl">
           <div
             ref={messagesContainerRef}
@@ -628,7 +691,7 @@ export default function TaxAssistant() {
               </motion.div>
             )}
 
-            <form onSubmit={handleSubmit} className="flex gap-2">
+            <form onSubmit={customSubmitHandler} className="flex gap-2">
               <div className="relative flex-1">
                 <Input
                   value={input}
