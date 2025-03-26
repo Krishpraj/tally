@@ -60,7 +60,7 @@ const suggestedQuestions = [
     icon: <BarChart3 className="h-4 w-4 mr-2" />,
   },
   {
-    text: "What's the standard deduction for 2023?",
+    text: "What's the standard deduction?",
     icon: <Calculator className="h-4 w-4 mr-2" />,
   },
   {
@@ -68,7 +68,7 @@ const suggestedQuestions = [
     icon: <Calendar className="h-4 w-4 mr-2" />,
   },
   {
-    text: "Can I deduct my home office expenses?",
+    text: "Can I deduct home office costs?",
     icon: <DollarSign className="h-4 w-4 mr-2" />,
   }, 
 ]

@@ -38,9 +38,17 @@ export function ChatHistorySidebar({
   onCollapseToggle,
 }: ChatHistorySidebarProps) {
   const [chatHistories, setChatHistories] = useState<ChatHistory[]>([])
-  const [isOpen, setIsOpen] = useState(!isMobile)
+  // Initialize isOpen as false for mobile, true for desktop
+  const [isOpen, setIsOpen] = useState(false)
   const [internalCollapsed, setInternalCollapsed] = useState(isCollapsed)
   const { toast } = useToast()
+
+  // Set initial sidebar state based on device type
+  useEffect(() => {
+    if (!isMobile) {
+      setIsOpen(true);
+    }
+  }, [isMobile]);
 
   // Handle external and internal collapse state
   useEffect(() => {
@@ -121,7 +129,11 @@ export function ChatHistorySidebar({
           variant="outline"
           size="icon"
           className="fixed top-4 left-4 z-40 rounded-full shadow-lg"
-          onClick={() => setIsOpen(true)}
+          onClick={() => {
+            setIsOpen(true);
+            // Force load the chat histories when opening the sidebar
+            loadChatHistories();
+          }}
         >
           <History className="h-5 w-5" />
         </Button>
@@ -153,6 +165,7 @@ export function ChatHistorySidebar({
             variant="outline"
             size="icon"
             className="rounded-full shadow-lg"
+            onClick={toggleCollapse}
             title="Chat History"
           >
             <History className="h-5 w-5" />
@@ -169,7 +182,7 @@ export function ChatHistorySidebar({
             exit={{ x: -300, opacity: 0 }}
             transition={{ duration: 0.2 }}
             className={cn(
-              "fixed inset-y-0 left-0 z-30 w-64 bg-white dark:bg-slate-950 border-r border-gray-200 dark:border-gray-800",
+              "fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-slate-950 border-r border-gray-200 dark:border-gray-800",
               isMobile ? "shadow-xl" : ""
             )}
           >
@@ -193,7 +206,13 @@ export function ChatHistorySidebar({
               <Button
                 className="mx-4 mt-4"
                 variant="default"
-                onClick={onNew}
+                onClick={() => {
+                  onNew();
+                  if (isMobile) {
+                    // Auto-close sidebar after creating a new chat on mobile
+                    setIsOpen(false);
+                  }
+                }}
               >
                 <Plus className="mr-2 h-4 w-4" />
                 New Chat
@@ -213,7 +232,13 @@ export function ChatHistorySidebar({
                           "p-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-900 transition-colors group",
                           currentChatId === history.id && "bg-gray-100 dark:bg-slate-800"
                         )}
-                        onClick={() => onSelect(history)}
+                        onClick={() => {
+                          onSelect(history);
+                          if (isMobile) {
+                            // Auto-close sidebar after selecting a chat on mobile
+                            setIsOpen(false);
+                          }
+                        }}
                       >
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
@@ -248,7 +273,7 @@ export function ChatHistorySidebar({
           initial={{ opacity: 0 }}
           animate={{ opacity: 0.5 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black z-20"
+          className="fixed inset-0 bg-black z-30"
           onClick={() => setIsOpen(false)}
         />
       )}
