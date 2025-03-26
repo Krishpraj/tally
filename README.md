@@ -58,14 +58,21 @@ npm run dev
 ```
 The app will be available at `http://localhost:3000`.
 
-## 🔜 Next Steps
+## 📖 Assumptions & Future Improvements
 
+### 🔹 Assumptions Made
+- AI-generated responses are simulated and can be improved with fine-tuning.
+- Placeholder logic is used for file uploads, with plans for real-time analysis in the future.
+
+### 🚀 Future Enhancements
 - **AI Model Upgrade**: Implement an AI model that can analyze financial documents  
-- **Branding Enhancements**: Create Logos, Favicons, etc..
+- **Branding & UI Enhancements**: Improve branding, themes, and user experience  
 - **Expanded File Analysis**: Enable real-time tax document parsing and summary generation  
 
 ---
 
 🚀 Built with **Next.js, Tailwind CSS, Vercel AI SDK, TanStack Query, and Gemini AI SDK**.  
+
+
 
 
