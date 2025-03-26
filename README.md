@@ -46,7 +46,7 @@ cd tally
 ```sh
 GOOGLE_GENERATIVE_AI_API_KEY=your-api-key-here
 ```
-
+Note: Get API Key From https://ai.google.dev/gemini-api/docs/api-key 
 ### 3️⃣ Install dependencies
 ```sh
 npm install
