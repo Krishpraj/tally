@@ -38,7 +38,7 @@ https://github.com/user-attachments/assets/0ad456cc-a359-49ac-b48b-4bcd1de49f85
 
 ### 1️⃣ Clone the repository
 ```sh
-git clone https://github.com/krishpraj/tally.git
+git clone https://github.com/Krishpraj/tally.git
 cd tally
 ```
 
