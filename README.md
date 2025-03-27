@@ -3,7 +3,10 @@
 Tally is your friendly AI assistant for all things tax and finance (Canadian) . Whether you're looking for tax-saving tips, insights on deductions, or financial planning advice, Tally makes it easy to navigate the world of personal finance. From tracking tax brackets to explaining credits and deductions, Tally helps you stay informed and make smarter financial decisions—keeping track of your taxes, one number at a time.
 
 
-https://github.com/user-attachments/assets/0ad456cc-a359-49ac-b48b-4bcd1de49f85
+
+https://github.com/user-attachments/assets/127dae31-3b1a-4a25-a639-3da447a1dff9
+
+
 
 
 ## 🚀 Features
