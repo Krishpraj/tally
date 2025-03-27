@@ -4,7 +4,11 @@ Tally is your friendly AI assistant for all things tax and finance (Canadian) . 
 
 
 
-https://github.com/user-attachments/assets/127dae31-3b1a-4a25-a639-3da447a1dff9
+
+
+https://github.com/user-attachments/assets/b203cc5c-0092-4108-a2cb-42b4a0c124a2
+
+
 
 
 
